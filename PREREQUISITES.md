@@ -4,10 +4,12 @@
 In order to build RVS from source, you need to have several packages on your
 system:
 
+- build-essential for Ubuntu 18.04
 - GCC 5.4.0
-- ROCm 1.8
+- ROCm 1.8 or higher
 - CMake 3.5.0
 - libpci-dev
+- libgtest-dev
 - Doxygen 1.8.11
 
 ## GCC
