@@ -109,6 +109,7 @@ if(NOT EXISTS "${ROCR_LIB_DIR}/lib${HIP_HCC_LIB}.so")
   RETURN()
 endif()
 
+
 ## define include directories
 include_directories(./ ../ ${ROCR_INC_DIR} ${ROCBLAS_INC_DIR} ${HIP_INC_DIR})
 # Add directories to look for library files to link

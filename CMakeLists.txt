@@ -69,6 +69,10 @@ if (${RVS_OS_TYPE} STREQUAL "ubuntu")
   set(RVS_OS_TYPE_NUM 1)
 elseif (${RVS_OS_TYPE} STREQUAL "centos")
   set(RVS_OS_TYPE_NUM 2)
+elseif (${RVS_OS_TYPE} STREQUAL "rhel")
+  set(RVS_OS_TYPE_NUM 2)
+elseif (${RVS_OS_TYPE} STREQUAL "sles")
+  set(RVS_OS_TYPE_NUM 2)
 else()
   set(RVS_OS_TYPE_NUM 0)
 endif()
@@ -105,7 +109,7 @@ set(RVS_BUILD_TESTS TRUE CACHE BOOL "TRUE if tests are to be built")
 
 set(RVS_DO_TRACE "1" CACHE STRING "Expand RVSTRACE_ macro")
 set(RVS_ROCBLAS "0" CACHE STRING "1 = use local rocBLAS")
-set(RVS_ROCMSMI "1" CACHE STRING "1 = use local rocm_smi_lib")
+set(RVS_ROCMSMI "0" CACHE STRING "1 = use local rocm_smi_lib")
 
 set(RVS_LIB_DIR "${CMAKE_BINARY_DIR}/rvslib" CACHE PATH "Contains RVS library")
 set(YAML_INC_DIR "${CMAKE_BINARY_DIR}/yaml-src/include" CACHE PATH "Contains header files exported by yaml-cpp")
@@ -113,8 +117,12 @@ set(YAML_LIB_DIR "${CMAKE_BINARY_DIR}/yaml-build" CACHE PATH "Contains library f
 set(ROCR_INC_DIR "/opt/rocm/include" CACHE PATH "Contains header files exported by ROC Runtime")
 set(ROCR_LIB_DIR "/opt/rocm/lib" CACHE PATH "Contains library files exported by ROC Runtime")
 set(HIP_INC_DIR "/opt/rocm/hip" CACHE PATH "Contains header files exported by ROC Runtime")
-set(ROCT_INC_DIR "/opt/rocm/include/libhsakmt" CACHE PATH "Contains header files exported by ROC Trunk")
+set(ROCT_INC_DIR "/opt/rocm/include" CACHE PATH "Contains header files exported by ROC Trunk")
 if (${RVS_OS_TYPE} STREQUAL "centos")
+  set(ROCT_LIB_DIR "/opt/rocm/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
+elseif (${RVS_OS_TYPE} STREQUAL "rhel")
+  set(ROCT_LIB_DIR "/opt/rocm/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
+elseif (${RVS_OS_TYPE} STREQUAL "sles")
   set(ROCT_LIB_DIR "/opt/rocm/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
 else()
   set(ROCT_LIB_DIR "/opt/rocm/lib" CACHE PATH "Contains library files exported by ROC Trunk")
@@ -358,16 +366,16 @@ if (RVS_ROCBLAS EQUAL 1)
   set(ROCBLAS_INC_DIR "${CMAKE_BINARY_DIR}/rvs_rblas-src/build/release/rocblas-install")
   set(ROCBLAS_LIB_DIR "${CMAKE_BINARY_DIR}/rvs_rblas-src/build/release/rocblas-install/lib/")
 else()
-  set(ROCBLAS_INC_DIR "/opt/rocm")
-  set(ROCBLAS_LIB_DIR "/opt/rocm/lib/")
+  set(ROCBLAS_INC_DIR "/opt/rocm/include")
+  set(ROCBLAS_LIB_DIR "/opt/rocm/lib")
 endif()
 
 if (RVS_ROCMSMI EQUAL 1)
   set(ROCM_SMI_INC_DIR "${CMAKE_BINARY_DIR}/rvs_smi-src/include")
   set(ROCM_SMI_LIB_DIR "${CMAKE_BINARY_DIR}/rvs_smi-build")
 else()
-  set(ROCM_SMI_INC_DIR "/opt/rocm/include/")
-  set(ROCM_SMI_LIB_DIR "/opt/rocm/lib/")
+  set(ROCM_SMI_INC_DIR "/opt/rocm/rocm_smi/include")
+  set(ROCM_SMI_LIB_DIR "/opt/rocm/rocm_smi/lib")
 endif()
 set(ROCM_SMI_LIB "rocm_smi64" CACHE STRING "rocm_smi library name")
 
@@ -433,6 +441,11 @@ WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 COMMENT "Create the doc directory"
 VERBATIM)
 
+add_custom_target(copy-files ALL
+  COMMAND ${CMAKE_COMMAND} -E copy
+      ${CMAKE_SOURCE_DIR}/testscripts/*.sh
+      ${CMAKE_BINARY_DIR}/bin/)
+
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
 message(STATUS "Doxygen: ${DOXYGEN_EXECUTABLE}")
@@ -473,8 +486,6 @@ endif(DOXYGEN_FOUND)
 
 if(RVS_ROCMSMI EQUAL 1)
   install(FILES "${ROCM_SMI_LIB_DIR}/librocm_smi64.so"
-                "${ROCM_SMI_LIB_DIR}/librocm_smi64.so.1"
-                "${ROCM_SMI_LIB_DIR}/librocm_smi64.so.1.0.0"
           DESTINATION ${CMAKE_PACKAGING_INSTALL_PREFIX}/rvs/lib
           COMPONENT rvsmodule)
   install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/rvsso.conf"
